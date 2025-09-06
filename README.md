@@ -62,12 +62,17 @@ php artisan serve
 
 ### API Endpoints (prefix `/api/v1`)
 - POST `/events`
-- GET `/events`
+- GET `/events` (paginated; upcoming by default, use `include_past=1` to show all)
 - GET `/events/{id}`
 - PUT `/events/{id}`
 - DELETE `/events/{id}`
 - POST `/events/{id}/register`
 - GET `/events/{id}/attendees?per_page=20`
+
+Query params (GET /events)
+- `page` (default 1)
+- `per_page` (default 10)
+- `include_past=1` to include events whose `end_time` is in the past
 
 ### Sample requests (PowerShell uses curl.exe)
 
@@ -81,7 +86,12 @@ curl.exe -X POST "http://127.0.0.1:8000/api/v1/events?tz=Asia/Kolkata" `
 
 List upcoming (in browser tz or explicit tz)
 ```powershell
-curl.exe "http://127.0.0.1:8000/api/v1/events?tz=Asia/Kolkata" -H "X-Timezone: Asia/Kolkata"
+curl.exe "http://127.0.0.1:8000/api/v1/events?page=1&per_page=10&tz=Asia/Kolkata" -H "X-Timezone: Asia/Kolkata"
+```
+
+List including past events
+```powershell
+curl.exe "http://127.0.0.1:8000/api/v1/events?include_past=1&tz=Asia/Kolkata" -H "X-Timezone: Asia/Kolkata"
 ```
 
 Get one
@@ -107,6 +117,10 @@ List attendees (paginated)
 ```powershell
 curl.exe "http://127.0.0.1:8000/api/v1/events/1/attendees?page=1&per_page=10"
 ```
+
+409 Conflict cases
+- PUT /events/{id}: attempting to lower `max_capacity` below current attendee count.
+- POST /events/{id}/register: when event is at capacity or the email is already registered for that event.
 
 ### API Docs (Swagger / OpenAPI)
 - Generate docs:
@@ -147,7 +161,7 @@ npm run dev
 ```
 
 Pages
-- `/events` — list upcoming events
+- `/events` — list events (paginated, upcoming by default)
 - `/events/new` — create event
 - `/events/[id]` — event details, register, attendees pagination
 - `/events/[id]/edit` — edit event

@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Symfony\Component\HttpFoundation\Response;
 use OpenApi\Annotations as OA;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @OA\Info(title="Mini Event Management API", version="1.0.0")
@@ -21,17 +22,38 @@ class EventController extends Controller
      * List upcoming events
      * @OA\Get(
      *   path="/events",
-     *   summary="List upcoming events",
+     *   summary="List events (upcoming by default)",
      *   @OA\Parameter(name="tz", in="query", description="IANA timezone (e.g., Asia/Kolkata)", @OA\Schema(type="string")),
-     *   @OA\Response(response=200, description="OK", @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/Event")))
+     *   @OA\Parameter(name="page", in="query", description="Page number (default 1)", @OA\Schema(type="integer")),
+     *   @OA\Parameter(name="per_page", in="query", description="Items per page (default 10)", @OA\Schema(type="integer")),
+     *   @OA\Parameter(name="include_past", in="query", description="Include past events when set to 1", @OA\Schema(type="integer", enum={0,1})),
+     *   @OA\Response(response=200, description="OK", @OA\JsonContent(ref="#/components/schemas/EventsResponse"))
      * )
      */
     public function index(Request $request)
     {
         $tz = $this->resolveTz($request);
-        $events = Event::where('end_time', '>=', now('UTC'))->orderBy('start_time')->get();
-        $payload = $events->map(fn ($e) => $this->toDto($e, $tz));
-        return response()->json($payload);
+        $perPage = (int) $request->query('per_page', 10);
+        $includePast = (string) $request->query('include_past', '0') === '1';
+
+        $query = Event::query();
+        if (!$includePast) {
+            $query->where('end_time', '>=', now('UTC'));
+        }
+
+        $paginator = $query->orderBy('start_time')->paginate($perPage);
+
+        $data = collect($paginator->items())->map(fn ($e) => $this->toDto($e, $tz))->values();
+
+        return response()->json([
+            'data' => $data,
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'last_page' => $paginator->lastPage(),
+            ],
+        ]);
     }
 
     /**
@@ -70,19 +92,34 @@ class EventController extends Controller
 
     /**
      * Update event
-     * @OA\Put(path="/events/{id}", summary="Update event", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")), @OA\Parameter(name="tz", in="query", @OA\Schema(type="string")), @OA\RequestBody(@OA\JsonContent(ref="#/components/schemas/EventInput")), @OA\Response(response=200, description="OK", @OA\JsonContent(ref="#/components/schemas/Event")))
+     * @OA\Put(path="/events/{id}", summary="Update event", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")), @OA\Parameter(name="tz", in="query", @OA\Schema(type="string")), @OA\RequestBody(@OA\JsonContent(ref="#/components/schemas/EventInput")), @OA\Response(response=200, description="OK", @OA\JsonContent(ref="#/components/schemas/Event")), @OA\Response(response=409, description="Conflict: capacity below current attendees", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")))
      */
     public function update(UpdateEventRequest $request, Event $event)
     {
         $tz = $this->resolveTz($request);
         $data = $request->validated();
-        foreach (['start_time','end_time'] as $key) {
+        foreach (["start_time","end_time"] as $key) {
             if (!empty($data[$key])) {
                 $data[$key] = Carbon::parse($data[$key], $tz)->setTimezone('UTC');
             }
         }
-        $event->update($data);
-        return response()->json($this->toDto($event, $tz));
+
+        // Use a transaction and row lock to keep capacity checks consistent with concurrent registrations
+        $updated = DB::transaction(function () use ($event, $data) {
+            $locked = Event::whereKey($event->id)->lockForUpdate()->firstOrFail();
+
+            if (array_key_exists('max_capacity', $data) && $data['max_capacity'] > 0) {
+                $current = $locked->attendees()->count();
+                if ($data['max_capacity'] < $current) {
+                    abort(Response::HTTP_CONFLICT, "Max capacity ({$data['max_capacity']}) cannot be less than current attendees ({$current})");
+                }
+            }
+
+            $locked->update($data);
+            return $locked;
+        }, 3);
+
+        return response()->json($this->toDto($updated, $tz));
     }
 
     /**

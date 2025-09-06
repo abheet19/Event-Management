@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { api } from '../../lib/api'
 import EventRegister from './register'
+import { Button } from '../../components/ui/button'
 
 async function getEvent(id: string) {
   return api(`/events/${id}`, { next: { revalidate: 0 } })
@@ -23,13 +24,13 @@ export default async function EventDetail({ params, searchParams }: any) {
 
   return (
     <main className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">{event.name}</h1>
-        <Link className="underline" href={`/events/${id}/edit`}>Edit</Link>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="h1">{event.name}</h1>
+        <Button asChild variant="outline"><Link href={`/events/${id}/edit`}>Edit</Link></Button>
       </div>
-      <div className="text-sm">{event.location} • {new Date(event.start_time).toLocaleString()} - {new Date(event.end_time).toLocaleString()}</div>
+      <div className="muted">{event.location} • {new Date(event.start_time).toLocaleString()} - {new Date(event.end_time).toLocaleString()}</div>
 
-      <div className="text-sm">
+      <div className="muted">
         {maxCap > 0 ? (
           <span>Capacity: {total}/{maxCap} {isFull && <strong>(Full)</strong>} {!isFull && capLeft !== null && <span>({capLeft} left)</span>}</span>
         ) : (
@@ -37,13 +38,16 @@ export default async function EventDetail({ params, searchParams }: any) {
         )}
       </div>
 
-      <section className="border p-3 rounded-md">
-        <h2 className="font-medium mb-2">Register</h2>
+      <section className="card">
+        <h2 className="h2 mb-2">Register</h2>
         <EventRegister eventId={id} full={isFull} />
       </section>
 
-      <section className="border p-3 rounded-md">
-        <h2 className="font-medium mb-2">Attendees</h2>
+      <section className="card">
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="h2">Attendees</h2>
+          <div className="muted">{total} total</div>
+        </div>
         {attendees.data.length === 0 ? (
           <p className="text-sm">No attendees yet.</p>
         ) : (
@@ -53,12 +57,12 @@ export default async function EventDetail({ params, searchParams }: any) {
             ))}
           </ul>
         )}
-        <div className="flex gap-2 mt-3">
+        <div className="mt-3 flex gap-2">
           {attendees.meta.current_page > 1 && (
-            <Link className="underline" href={`?page=${attendees.meta.current_page - 1}&per_page=${attendees.meta.per_page}`}>Prev</Link>
+            <Button asChild variant="outline"><Link href={`?page=${attendees.meta.current_page - 1}&per_page=${attendees.meta.per_page}`}>Prev</Link></Button>
           )}
           {attendees.meta.current_page < attendees.meta.last_page && (
-            <Link className="underline" href={`?page=${attendees.meta.current_page + 1}&per_page=${attendees.meta.per_page}`}>Next</Link>
+            <Button asChild variant="outline"><Link href={`?page=${attendees.meta.current_page + 1}&per_page=${attendees.meta.per_page}`}>Next</Link></Button>
           )}
         </div>
       </section>

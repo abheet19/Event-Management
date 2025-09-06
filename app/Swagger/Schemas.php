@@ -50,6 +50,13 @@ use OpenApi\Annotations as OA;
  * )
  *
  * @OA\Schema(
+ *   schema="EventsResponse",
+ *   type="object",
+ *   @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Event")),
+ *   @OA\Property(property="meta", ref="#/components/schemas/PaginationMeta")
+ * )
+ *
+ * @OA\Schema(
  *   schema="AttendeesResponse",
  *   type="object",
  *   @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Attendee")),
