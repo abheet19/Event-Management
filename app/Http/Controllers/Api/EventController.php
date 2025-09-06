@@ -23,7 +23,7 @@ class EventController extends Controller
      *   path="/events",
      *   summary="List upcoming events",
      *   @OA\Parameter(name="tz", in="query", description="IANA timezone (e.g., Asia/Kolkata)", @OA\Schema(type="string")),
-     *   @OA\Response(response=200, description="OK")
+     *   @OA\Response(response=200, description="OK", @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/Event")))
      * )
      */
     public function index(Request $request)
@@ -40,18 +40,9 @@ class EventController extends Controller
      *   path="/events",
      *   summary="Create event",
      *   @OA\Parameter(name="tz", in="query", description="IANA timezone for interpreting input times", @OA\Schema(type="string")),
-     *   @OA\RequestBody(
-     *     required=true,
-     *     @OA\JsonContent(
-     *       required={"name","start_time","end_time","max_capacity"},
-     *       @OA\Property(property="name", type="string"),
-     *       @OA\Property(property="location", type="string"),
-     *       @OA\Property(property="start_time", type="string", format="date-time"),
-     *       @OA\Property(property="end_time", type="string", format="date-time"),
-     *       @OA\Property(property="max_capacity", type="integer", minimum=0)
-     *     )
-     *   ),
-     *   @OA\Response(response=201, description="Created")
+     *   @OA\RequestBody(required=true, @OA\JsonContent(ref="#/components/schemas/EventInput")),
+     *   @OA\Response(response=201, description="Created", @OA\JsonContent(ref="#/components/schemas/Event")),
+     *   @OA\Response(response=422, description="Validation error", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
      * )
      */
     public function store(StoreEventRequest $request)
@@ -69,7 +60,7 @@ class EventController extends Controller
 
     /**
      * Show a single event
-     * @OA\Get(path="/events/{id}", summary="Get event", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")), @OA\Parameter(name="tz", in="query", @OA\Schema(type="string")), @OA\Response(response=200, description="OK"))
+     * @OA\Get(path="/events/{id}", summary="Get event", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")), @OA\Parameter(name="tz", in="query", @OA\Schema(type="string")), @OA\Response(response=200, description="OK", @OA\JsonContent(ref="#/components/schemas/Event")), @OA\Response(response=404, description="Not Found", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")))
      */
     public function show(Request $request, Event $event)
     {
@@ -79,7 +70,7 @@ class EventController extends Controller
 
     /**
      * Update event
-     * @OA\Put(path="/events/{id}", summary="Update event", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")), @OA\Parameter(name="tz", in="query", @OA\Schema(type="string")), @OA\RequestBody(@OA\JsonContent()), @OA\Response(response=200, description="OK"))
+     * @OA\Put(path="/events/{id}", summary="Update event", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")), @OA\Parameter(name="tz", in="query", @OA\Schema(type="string")), @OA\RequestBody(@OA\JsonContent(ref="#/components/schemas/EventInput")), @OA\Response(response=200, description="OK", @OA\JsonContent(ref="#/components/schemas/Event")))
      */
     public function update(UpdateEventRequest $request, Event $event)
     {
@@ -106,7 +97,7 @@ class EventController extends Controller
 
     /**
      * List attendees
-     * @OA\Get(path="/events/{id}/attendees", summary="List attendees", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")), @OA\Parameter(name="page", in="query", @OA\Schema(type="integer")), @OA\Parameter(name="per_page", in="query", @OA\Schema(type="integer")), @OA\Response(response=200, description="OK"))
+     * @OA\Get(path="/events/{id}/attendees", summary="List attendees", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")), @OA\Parameter(name="page", in="query", @OA\Schema(type="integer")), @OA\Parameter(name="per_page", in="query", @OA\Schema(type="integer")), @OA\Response(response=200, description="OK", @OA\JsonContent(ref="#/components/schemas/AttendeesResponse")))
      */
     public function attendees(Request $request, Event $event)
     {

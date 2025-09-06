@@ -11,95 +11,152 @@
 
 Quick dev setup and API summary for the Event Management project.
 
-Prereqs: PHP >= 8.1, Composer, Docker (for Postgres) or PostgreSQL installed.
+Prereqs: PHP >= 8.1, Composer, Docker (for Postgres) or PostgreSQL installed, Node 20+ (for frontend).
 
-1. Start Postgres with Docker (recommended):
+## Backend (Laravel + PostgreSQL)
+
+1) Start PostgreSQL with Docker (Windows PowerShell)
 
 ```powershell
-# replace passwords as needed
-docker run --name pg-event -e POSTGRES_USER=events_user -e POSTGRES_PASSWORD=secret_password -e POSTGRES_DB=events_db -p 5432:5432 -d postgres:15
+# Host port 5433 -> container 5432 (matches .env)
+docker run --name pg-event `
+  -e POSTGRES_USER=events_user `
+  -e POSTGRES_PASSWORD=Secret_271919 `
+  -e POSTGRES_DB=events_db `
+  -p 5433:5432 -d postgres:15
 ```
 
-2. Update `.env` (project root) with DB credentials:
+2) Configure environment
 
 ```
 DB_CONNECTION=pgsql
 DB_HOST=127.0.0.1
-DB_PORT=5432
+DB_PORT=5433
 DB_DATABASE=events_db
 DB_USERNAME=events_user
-DB_PASSWORD=secret_password
+DB_PASSWORD=Secret_271919
 ```
 
-3. Install composer deps (already done for you):
+3) Install dependencies and bootstrap
 ```
 composer install
-```
-
-4. Generate app key and run migrations:
-```
 php artisan key:generate
 php artisan migrate
 ```
 
-5. Run the dev server:
+4) Run the dev server
 ```
 php artisan serve
+# => http://127.0.0.1:8000
 ```
 
-API Endpoints (prefix /api/v1):
-- POST /events
-- GET /events
-- GET /events/{id}
-- PUT /events/{id}
-- DELETE /events/{id}
-- POST /events/{id}/register
-- GET /events/{id}/attendees?per_page=20
-
-Notes:
-- Time fields are stored as timezone-aware timestamps (postgres timestamptz) in UTC.
-- Duplicate registrations per (event_id, email) are prevented at DB level.
-- Capacity is enforced in registration logic.
-
-## CORS
+### CORS
 - Enabled for API paths and Next.js dev origins: http://localhost:3000 and http://127.0.0.1:3000.
 - If you change the frontend port or domain, update `config/cors.php` and run: `php artisan config:clear`.
 
-## Timezone policy
-- All event times are stored in UTC (PostgreSQL timestamptz).
-- On create/update, backend accepts local times and converts to UTC using the provided timezone.
-- Frontend should auto-detect timezone and pass it either as query `?tz=Asia/Kolkata` or header `X-Timezone: Asia/Kolkata`.
-- GET responses convert event times to requested timezone; default is UTC.
+### Timezone policy
+- All event times are stored in UTC (PostgreSQL `timestamptz`).
+- On create/update, backend interprets provided times using the timezone from `?tz=` or `X-Timezone` header, then converts to UTC for storage.
+- On reads, times are converted back to the requested timezone; default is UTC if not provided.
+- Works with IST (`Asia/Kolkata`) and any IANA timezone.
 
-Examples:
-- Create in IST
-```
-POST /api/v1/events?tz=Asia/Kolkata
-{
-  "name": "Demo",
-  "location": "BLR",
-  "start_time": "2025-09-08T10:00:00",
-  "end_time": "2025-09-08T11:00:00",
-  "max_capacity": 50
-}
-```
-- List in browser tz
-```
-GET /api/v1/events?tz=Asia/Kolkata
+### API Endpoints (prefix `/api/v1`)
+- POST `/events`
+- GET `/events`
+- GET `/events/{id}`
+- PUT `/events/{id}`
+- DELETE `/events/{id}`
+- POST `/events/{id}/register`
+- GET `/events/{id}/attendees?per_page=20`
+
+### Sample requests (PowerShell uses curl.exe)
+
+Create event in IST
+```powershell
+curl.exe -X POST "http://127.0.0.1:8000/api/v1/events?tz=Asia/Kolkata" `
+  -H "Content-Type: application/json" `
+  -H "X-Timezone: Asia/Kolkata" `
+  -d "{\"name\":\"Demo\",\"location\":\"BLR\",\"start_time\":\"2025-09-08T10:00:00\",\"end_time\":\"2025-09-08T11:00:00\",\"max_capacity\":50}"
 ```
 
-## API Docs (Swagger)
-- Package: L5-Swagger
+List upcoming (in browser tz or explicit tz)
+```powershell
+curl.exe "http://127.0.0.1:8000/api/v1/events?tz=Asia/Kolkata" -H "X-Timezone: Asia/Kolkata"
+```
+
+Get one
+```powershell
+curl.exe "http://127.0.0.1:8000/api/v1/events/1?tz=Asia/Kolkata" -H "X-Timezone: Asia/Kolkata"
+```
+
+Update
+```powershell
+curl.exe -X PUT "http://127.0.0.1:8000/api/v1/events/1?tz=Asia/Kolkata" `
+  -H "Content-Type: application/json" -H "X-Timezone: Asia/Kolkata" `
+  -d "{\"name\":\"Demo Updated\",\"start_time\":\"2025-09-08T10:30:00\",\"end_time\":\"2025-09-08T11:30:00\",\"max_capacity\":80}"
+```
+
+Register attendee (duplicate and capacity conflicts return 409)
+```powershell
+curl.exe -X POST "http://127.0.0.1:8000/api/v1/events/1/register" `
+  -H "Content-Type: application/json" `
+  -d "{\"name\":\"Alice\",\"email\":\"alice@example.com\"}"
+```
+
+List attendees (paginated)
+```powershell
+curl.exe "http://127.0.0.1:8000/api/v1/events/1/attendees?page=1&per_page=10"
+```
+
+### API Docs (Swagger / OpenAPI)
 - Generate docs:
-  - php artisan l5-swagger:generate
-- Serve UI (json served under storage/api-docs/openapi.json). You can use a Swagger UI docker or VS Code extension to view it.
-- Endpoint configured: /api/documentation (if using L5 routing).
+```
+php artisan config:clear
+php artisan l5-swagger:generate
+```
+- UI: http://127.0.0.1:8000/api/documentation
+- JSON: `storage/api-docs/api-docs.json`
 
-### Generate Swagger (Windows PowerShell)
-- cd "d:\\Code\\Omnify Project\\event-management"
-- php artisan config:clear
-- php artisan l5-swagger:generate
-- The JSON will be at storage/api-docs/api-docs.json
+### Tests
+```
+php artisan test
+# or
+vendor\bin\phpunit
+```
+
+### Common pitfalls
+- Connection refused: ensure host port `5433` maps to container `5432` and matches `.env`.
+- CORS errors: confirm `config/cors.php` allows your frontend origin, then `php artisan config:clear`.
+- Timezone: use valid IANA tz names like `Asia/Kolkata`.
+
+## Frontend (Next.js 14 + TypeScript)
+
+Folder: `event-frontend/`
+
+1) Configure `.env.local`
+```
+NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000/api/v1
+```
+
+2) Install and run
+```powershell
+cd event-frontend
+npm install
+npm run dev
+# => http://localhost:3000
+```
+
+Pages
+- `/events` — list upcoming events
+- `/events/new` — create event
+- `/events/[id]` — event details, register, attendees pagination
+- `/events/[id]/edit` — edit event
+
+Timezone is auto-detected in the browser and sent as both `?tz=` and `X-Timezone`.
+
+---
+
+Project uses: Laravel (API), PostgreSQL, L5-Swagger, Next.js App Router, Tailwind, minimal shadcn-style UI components.
 
 ## About Laravel
 

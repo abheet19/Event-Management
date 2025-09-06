@@ -15,7 +15,15 @@ class RegistrationController extends Controller
 {
     /**
      * Register attendee
-     * @OA\Post(path="/events/{id}/register", summary="Register attendee", @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")), @OA\RequestBody(@OA\JsonContent(required={"name","email"}, @OA\Property(property="name", type="string"), @OA\Property(property="email", type="string"))), @OA\Response(response=201, description="Created"), @OA\Response(response=409, description="Conflict"))
+     * @OA\Post(
+     *   path="/events/{id}/register",
+     *   summary="Register attendee",
+     *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *   @OA\RequestBody(required=true, @OA\JsonContent(required={"name","email"}, @OA\Property(property="name", type="string"), @OA\Property(property="email", type="string"))),
+     *   @OA\Response(response=201, description="Created", @OA\JsonContent(ref="#/components/schemas/Attendee")),
+     *   @OA\Response(response=409, description="Conflict", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+     *   @OA\Response(response=422, description="Validation error", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
+     * )
      */
     public function register(RegisterAttendeeRequest $request, Event $event)
     {
