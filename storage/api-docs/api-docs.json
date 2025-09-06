@@ -12,7 +12,7 @@
     "paths": {
         "/events": {
             "get": {
-                "summary": "List upcoming events",
+                "summary": "List events (upcoming by default)",
                 "description": "List upcoming events",
                 "operationId": "3befe2e8582683a8dc70f7b706a5a97d",
                 "parameters": [
@@ -23,6 +23,42 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "name": "X-Timezone",
+                        "in": "header",
+                        "description": "IANA timezone header (same value as tz)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Page number (default 1)",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Items per page (default 10)",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "include_past",
+                        "in": "query",
+                        "description": "Include past events when set to 1",
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                0,
+                                1
+                            ]
+                        }
                     }
                 ],
                 "responses": {
@@ -31,9 +67,26 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/Event"
+                                    "$ref": "#/components/schemas/EventsResponse"
+                                },
+                                "example": {
+                                    "data": [
+                                        {
+                                            "id": 1,
+                                            "name": "Demo",
+                                            "location": "BLR",
+                                            "start_time": "2025-09-08T10:00:00+05:30",
+                                            "end_time": "2025-09-08T11:00:00+05:30",
+                                            "max_capacity": 50,
+                                            "created_at": "2025-09-06T08:00:00Z",
+                                            "updated_at": "2025-09-06T08:00:00Z"
+                                        }
+                                    ],
+                                    "meta": {
+                                        "current_page": 1,
+                                        "per_page": 10,
+                                        "total": 1,
+                                        "last_page": 1
                                     }
                                 }
                             }
@@ -50,6 +103,14 @@
                         "name": "tz",
                         "in": "query",
                         "description": "IANA timezone for interpreting input times",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Timezone",
+                        "in": "header",
+                        "description": "IANA timezone header (same value as tz)",
                         "schema": {
                             "type": "string"
                         }
@@ -72,6 +133,16 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/Event"
+                                },
+                                "example": {
+                                    "id": 2,
+                                    "name": "Conference",
+                                    "location": "Remote",
+                                    "start_time": "2025-09-08T09:00:00+05:30",
+                                    "end_time": "2025-09-08T10:00:00+05:30",
+                                    "max_capacity": 100,
+                                    "created_at": "2025-09-06T08:05:00Z",
+                                    "updated_at": "2025-09-06T08:05:00Z"
                                 }
                             }
                         }
@@ -106,6 +177,14 @@
                     {
                         "name": "tz",
                         "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Timezone",
+                        "in": "header",
+                        "description": "IANA timezone header (same value as tz)",
                         "schema": {
                             "type": "string"
                         }
@@ -153,6 +232,14 @@
                         "schema": {
                             "type": "string"
                         }
+                    },
+                    {
+                        "name": "X-Timezone",
+                        "in": "header",
+                        "description": "IANA timezone header (same value as tz)",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "requestBody": {
@@ -174,6 +261,19 @@
                                 }
                             }
                         }
+                    },
+                    "409": {
+                        "description": "Conflict: capacity below current attendees",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Max capacity (30) cannot be less than current attendees (42)"
+                                }
+                            }
+                        }
                     }
                 }
             },
@@ -188,6 +288,21 @@
                         "required": true,
                         "schema": {
                             "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "tz",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Timezone",
+                        "in": "header",
+                        "description": "IANA timezone header (same value as tz)",
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 ],
@@ -213,6 +328,22 @@
                         }
                     },
                     {
+                        "name": "tz",
+                        "in": "query",
+                        "description": "IANA timezone (affects event times elsewhere)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "X-Timezone",
+                        "in": "header",
+                        "description": "IANA timezone header (same value as tz)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
                         "name": "page",
                         "in": "query",
                         "schema": {
@@ -224,6 +355,28 @@
                         "in": "query",
                         "schema": {
                             "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Search by name or email (case-insensitive)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "description": "Sort order",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "created_at_desc",
+                                "created_at_asc",
+                                "name_asc",
+                                "name_desc"
+                            ]
                         }
                     }
                 ],
@@ -254,6 +407,14 @@
                         "schema": {
                             "type": "integer"
                         }
+                    },
+                    {
+                        "name": "X-Timezone",
+                        "in": "header",
+                        "description": "IANA timezone header (optional)",
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "requestBody": {
@@ -267,10 +428,12 @@
                                 ],
                                 "properties": {
                                     "name": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "example": "Alice"
                                     },
                                     "email": {
-                                        "type": "string"
+                                        "type": "string",
+                                        "example": "alice@example.com"
                                     }
                                 },
                                 "type": "object"
@@ -285,6 +448,12 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/Attendee"
+                                },
+                                "example": {
+                                    "id": 10,
+                                    "event_id": 1,
+                                    "name": "Alice",
+                                    "email": "alice@example.com"
                                 }
                             }
                         }
@@ -295,6 +464,9 @@
                             "application/json": {
                                 "schema": {
                                     "$ref": "#/components/schemas/ErrorResponse"
+                                },
+                                "example": {
+                                    "message": "Event is at full capacity"
                                 }
                             }
                         }
@@ -436,6 +608,20 @@
                     "last_page": {
                         "type": "integer",
                         "example": 5
+                    }
+                },
+                "type": "object"
+            },
+            "EventsResponse": {
+                "properties": {
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Event"
+                        }
+                    },
+                    "meta": {
+                        "$ref": "#/components/schemas/PaginationMeta"
                     }
                 },
                 "type": "object"
