@@ -23,12 +23,18 @@ export async function api(path: string, opts: ApiOptions = {}) {
     'X-Timezone': tz,
     ...(opts.headers || {}),
   }
-  const res = await fetch(url, {
-    method: opts.method || 'GET',
-    headers,
-    body: opts.body ? JSON.stringify(opts.body) : undefined,
-    next: opts.next,
-  })
+  let res: Response
+  try {
+    res = await fetch(url, {
+      method: opts.method || 'GET',
+      headers,
+      body: opts.body ? JSON.stringify(opts.body) : undefined,
+      next: opts.next,
+    })
+  } catch (e) {
+    // Network/CORS or server down
+    throw new Error('Network error contacting API (CORS or server unavailable)')
+  }
   if (!res.ok) {
     let msg = `${res.status} ${res.statusText}`
     try { const j = await res.json(); msg = j.message || msg } catch {}

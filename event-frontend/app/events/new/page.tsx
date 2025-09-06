@@ -23,7 +23,9 @@ export default function NewEventPage() {
     try {
       setSubmitting(true)
       await api('/events', { method: 'POST', body: { ...form, name: form.name.trim(), location: form.location.trim(), max_capacity: Number(form.max_capacity) } })
+      // Navigate to list and refresh to bust any client-side cache
       router.push('/events')
+      router.refresh()
     } catch (err: any) {
       setError(err.message)
     } finally {
