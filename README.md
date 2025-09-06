@@ -13,6 +13,39 @@ Quick dev setup and API summary for the Event Management project.
 
 Prereqs: PHP >= 8.1, Composer, Docker (for Postgres) or PostgreSQL installed, Node 20+ (for frontend).
 
+## TL;DR Quickstart
+1) Backend (Laravel + PostgreSQL on port 5433)
+- Copy `.env` and set DB_* to your Postgres, run:
+```
+php artisan key:generate
+php artisan migrate
+php artisan serve
+```
+- Swagger UI: GET /api/docs (if enabled)
+
+2) Frontend (Next.js)
+- event-frontend/.env.local:
+```
+NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000/api/v1
+```
+- Then:
+```
+cd event-frontend
+npm install
+npm run dev
+```
+
+## CORS in deployments
+- Add allowed origins in `.env` (comma-separated):
+```
+CORS_ALLOWED_ORIGINS=https://your-frontend.example.com,https://staging.example.com
+```
+- Or rely on the localhost patterns for local dev.
+
+## Loom walkthrough
+- Video: <ADD_LINK_HERE>
+- Covers: CRUD, register, 409 duplicate/at-capacity, 409 capacity-lowering, IST tz demo, pagination, include_past, attendees search/sort.
+
 ## Backend (Laravel + PostgreSQL)
 
 1) Start PostgreSQL with Docker (Windows PowerShell)
