@@ -46,6 +46,29 @@ CORS_ALLOWED_ORIGINS=https://your-frontend.example.com,https://staging.example.c
 - Video: <ADD_LINK_HERE>
 - Covers: CRUD, register, 409 duplicate/at-capacity, 409 capacity-lowering, IST tz demo, pagination, include_past, attendees search/sort.
 
+## Smoke-test checklist
+- Create/Edit with DatetimePicker
+  - Create: start ≥ now; end auto-extends +1h when start moves forward; submit labeled "Create"; success toast; redirects to /events.
+  - Edit: submit labeled "Save"; lowering capacity below current attendees shows backend 409 message in toast.
+- Event details
+  - Capacity shows Unlimited or X/Y with (Full) or (Z left).
+  - Registration: strict valid email; disabled until valid; success toast; 409 duplicate and full-capacity toasts show backend messages.
+- Attendees table
+  - Pagination (Prev/Next, per-page) works and preserves q/sort.
+  - Search q filters name/email (case-insensitive).
+  - Sort options: created_at asc/desc, name asc/desc.
+  - Copy button copies email.
+- Events list
+  - Upcoming by default; include_past toggle flips title/results.
+  - Pagination and per-page selector work.
+- Timezone
+  - Timezone badge shows browser tz.
+  - Create in IST (Asia/Kolkata) and verify responses show +05:30; fetching with tz=UTC shows UTC conversion.
+- UI polish
+  - "Create Event" CTA on list; "Create" on form; "Save" on edit.
+  - No "UTC-aware" label; helpful empty states.
+  - Global error page shows friendly message and "Try again".
+
 ## Backend (Laravel + PostgreSQL)
 
 1) Start PostgreSQL with Docker (Windows PowerShell)
