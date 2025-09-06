@@ -7,6 +7,7 @@ import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
 import { useToast } from '../../components/ui/toaster'
+import DatetimePicker from '../../components/ui/datetime-picker'
 
 export default function NewEventPage() {
   const router = useRouter()
@@ -84,12 +85,12 @@ export default function NewEventPage() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <Label htmlFor="start">Start time</Label>
-            <Input id="start" type="datetime-local" min={minIsoNow} value={form.start_time} onChange={e => onStartChange(e.target.value)} required disabled={submitting} />
+            <DatetimePicker id="start" label="" value={form.start_time} onChange={onStartChange} min={minIsoNow} />
             <p className="mt-1 text-xs text-neutral-500">Times shown in your timezone: {tz}</p>
           </div>
           <div>
             <Label htmlFor="end">End time</Label>
-            <Input id="end" type="datetime-local" min={form.start_time || minIsoNow} value={form.end_time} onChange={e => setForm({ ...form, end_time: e.target.value })} required disabled={submitting} />
+            <DatetimePicker id="end" label="" value={form.end_time} onChange={(v) => setForm({ ...form, end_time: v })} min={form.start_time || minIsoNow} />
           </div>
         </div>
         <div>
