@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { api } from '../../../lib/api'
 import { Button } from '../../../components/ui/button'
@@ -17,6 +17,16 @@ export default function EditEventPage() {
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+
+  const tz = useMemo(() => {
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC' } catch { return 'UTC' }
+  }, [])
+
+  const minIsoNow = useMemo(() => {
+    const d = new Date()
+    const iso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0,16)
+    return iso
+  }, [])
 
   useEffect(() => {
     (async () => {
@@ -89,11 +99,12 @@ export default function EditEventPage() {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div>
             <Label htmlFor="start">Start time</Label>
-            <Input id="start" type="datetime-local" value={form.start_time} onChange={e => setForm({ ...form, start_time: e.target.value })} required disabled={submitting} />
+            <Input id="start" type="datetime-local" min={minIsoNow} value={form.start_time} onChange={e => setForm({ ...form, start_time: e.target.value })} required disabled={submitting} />
+            <p className="mt-1 text-xs text-neutral-500">Times shown in your timezone: {tz}</p>
           </div>
           <div>
             <Label htmlFor="end">End time</Label>
-            <Input id="end" type="datetime-local" value={form.end_time} onChange={e => setForm({ ...form, end_time: e.target.value })} required disabled={submitting} />
+            <Input id="end" type="datetime-local" min={form.start_time || minIsoNow} value={form.end_time} onChange={e => setForm({ ...form, end_time: e.target.value })} required disabled={submitting} />
           </div>
         </div>
         <div>

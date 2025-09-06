@@ -74,6 +74,24 @@ Query params (GET /events)
 - `per_page` (default 10)
 - `include_past=1` to include events whose `end_time` is in the past
 
+### GET /events/{id}/attendees
+Supports pagination and now search/sort.
+
+Query params
+- `page` (default 1)
+- `per_page` (default 20)
+- `q` optional: case-insensitive search over name and email (ILIKE)
+- `sort` optional: one of `created_at_desc` (default), `created_at_asc`, `name_asc`, `name_desc`
+
+Examples
+```powershell
+# Page 1, 20 per page, search by name/email containing "ali", newest first
+curl.exe "http://127.0.0.1:8000/api/v1/events/1/attendees?page=1&per_page=20&q=ali&sort=created_at_desc"
+
+# Sort by name A→Z
+curl.exe "http://127.0.0.1:8000/api/v1/events/1/attendees?page=1&per_page=20&sort=name_asc"
+```
+
 ### Sample requests (PowerShell uses curl.exe)
 
 Create event in IST
@@ -165,6 +183,9 @@ Pages
 - `/events/new` — create event
 - `/events/[id]` — event details, register, attendees pagination
 - `/events/[id]/edit` — edit event
+
+- Event detail attendees view uses a table with search (q), sort selector, pagination, and a copy-to-clipboard button for emails.
+- Global friendly error page (`app/error.tsx`) shows a helpful message and a Try again button.
 
 Timezone is auto-detected in the browser and sent as both `?tz=` and `X-Timezone`.
 

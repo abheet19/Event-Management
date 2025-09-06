@@ -19,9 +19,10 @@ class RegistrationController extends Controller
      *   path="/events/{id}/register",
      *   summary="Register attendee",
      *   @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
-     *   @OA\RequestBody(required=true, @OA\JsonContent(required={"name","email"}, @OA\Property(property="name", type="string"), @OA\Property(property="email", type="string"))),
-     *   @OA\Response(response=201, description="Created", @OA\JsonContent(ref="#/components/schemas/Attendee")),
-     *   @OA\Response(response=409, description="Conflict", @OA\JsonContent(ref="#/components/schemas/ErrorResponse")),
+     *   @OA\Parameter(name="X-Timezone", in="header", description="IANA timezone header (optional)", @OA\Schema(type="string")),
+     *   @OA\RequestBody(required=true, @OA\JsonContent(required={"name","email"}, @OA\Property(property="name", type="string", example="Alice"), @OA\Property(property="email", type="string", example="alice@example.com"))),
+     *   @OA\Response(response=201, description="Created", @OA\JsonContent(ref="#/components/schemas/Attendee", example={"id": 10, "event_id": 1, "name": "Alice", "email": "alice@example.com"})),
+     *   @OA\Response(response=409, description="Conflict", @OA\JsonContent(ref="#/components/schemas/ErrorResponse", example={"message": "Event is at full capacity"})),
      *   @OA\Response(response=422, description="Validation error", @OA\JsonContent(ref="#/components/schemas/ErrorResponse"))
      * )
      */

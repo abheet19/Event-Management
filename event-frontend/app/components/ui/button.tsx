@@ -48,4 +48,19 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 )
 Button.displayName = 'Button'
 
+export function IconButton({ children, className, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button
+      {...props}
+      className={cn(
+        buttonVariants({ variant: 'ghost' }),
+        'inline-flex h-8 w-8 items-center justify-center rounded-full',
+        className,
+      )}
+    >
+      {children}
+    </button>
+  )
+}
+
 export { buttonVariants }
