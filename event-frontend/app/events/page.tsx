@@ -6,9 +6,10 @@ import PerPageSelect from './per-page-select'
 import IncludePastToggle from './include-past-toggle'
 
 export default async function EventsPage({ searchParams }: any) {
-  const page = Number(searchParams?.page || 1)
-  const perPage = Number(searchParams?.per_page || 10)
-  const includePast = String(searchParams?.include_past || '0')
+  const params = await searchParams
+  const page = Number(params?.page || 1)
+  const perPage = Number(params?.per_page || 10)
+  const includePast = String(params?.include_past || '0')
   const qs = `?page=${page}&per_page=${perPage}${includePast === '1' ? '&include_past=1' : ''}`
   const res = await api(`/events${qs}`, { next: { revalidate: 0 } })
   const events = res?.data || []

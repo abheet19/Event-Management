@@ -18,11 +18,12 @@ async function getAttendees(id: string, page: number, perPage: number, q: string
 }
 
 export default async function EventDetail({ params, searchParams }: any) {
-  const id = params.id as string
-  const page = Number(searchParams?.page || 1)
-  const perPage = Number(searchParams?.per_page || 10)
-  const q = String(searchParams?.q || '')
-  const sort = String(searchParams?.sort || 'created_at_desc')
+  const id = (await params).id as string
+  const sp = await searchParams
+  const page = Number(sp?.page || 1)
+  const perPage = Number(sp?.per_page || 10)
+  const q = String(sp?.q || '')
+  const sort = String(sp?.sort || 'created_at_desc')
   const [event, attendees] = await Promise.all([getEvent(id), getAttendees(id, page, perPage, q, sort)])
 
   const total = attendees?.meta?.total ?? 0
