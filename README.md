@@ -17,9 +17,10 @@ A full-stack event management platform with real-time attendee registration, tim
 
 ### 1. Start PostgreSQL
 ```powershell
+
 docker run --name pg-event `
   -e POSTGRES_USER=events_user `
-  -e POSTGRES_PASSWORD=Secret_271919 `
+  -e POSTGRES_PASSWORD=<YOUR_DB_PASSWORD> `
   -e POSTGRES_DB=events_db `
   -p 5433:5432 -d postgres:15
 ```
@@ -27,9 +28,11 @@ docker run --name pg-event `
 ### 2. Backend Setup
 ```powershell
 cd event-management
+copy .env.example .env
+
 composer install
 php artisan key:generate
-php artisan migrate
+php artisan migrate --seed
 php artisan serve
 # Backend: http://127.0.0.1:8000
 ```
@@ -95,11 +98,32 @@ curl.exe "http://127.0.0.1:8000/api/v1/events/1/attendees?q=john&sort=name_asc"
 
 ## Testing
 
-```powershell
-# Run all tests
-php artisan test
+Environment separation prevents tests from wiping demo data.
 
-# Generate API docs
+1) Create `.env.testing` (ignored by git):
+```
+APP_ENV=testing
+DB_CONNECTION=pgsql
+DB_HOST=127.0.0.1
+DB_PORT=5433
+DB_DATABASE=events_test
+DB_USERNAME=events_user
+DB_PASSWORD=<YOUR_DB_PASSWORD>
+```
+
+2) Create the test database in Postgres once:
+```powershell
+# Inside the same container/session where Postgres runs
+# psql -U events_user -h 127.0.0.1 -p 5433 -d events_db -c "CREATE DATABASE events_test;"
+```
+
+3) Run tests (uses `.env.testing`):
+```powershell
+php artisan test
+```
+
+4) (Optional) Regenerate API docs:
+```powershell
 php artisan l5-swagger:generate
 ```
 
@@ -113,16 +137,18 @@ php artisan l5-swagger:generate
 ```powershell
 docker run --name pg-event `
   -e POSTGRES_USER=events_user `
-  -e POSTGRES_PASSWORD=Secret_271919 `
+  -e POSTGRES_PASSWORD=<YOUR_DB_PASSWORD> `
   -e POSTGRES_DB=events_db `
   -p 5433:5432 -d postgres:15
 ```
 
 2) **Configure and run**
 ```powershell
+copy .env.example .env
+# Fill in DB_* for Postgres
 composer install
 php artisan key:generate
-php artisan migrate
+php artisan migrate --seed
 php artisan serve  # http://127.0.0.1:8000
 ```
 
@@ -149,6 +175,11 @@ Features: Auto timezone detection, error toasts, pagination, search/sort UI
 
 ## Demo & Validation
 
+### Quick Verification
+- Backend seeded: `GET http://127.0.0.1:8000/api/v1/events` returns a non-empty `data` array
+- Frontend page `/events` loads without 500, shows seeded events
+- Attendees list search/sort works for a seeded event
+
 ### Loom Walkthrough
 - **Video**: <ADD_LINK_HERE>
 - **Coverage**: Complete requirements validation - CRUD, registration conflicts, timezone management (IST), pagination, testing, Swagger docs
@@ -159,6 +190,11 @@ Features: Auto timezone detection, error toasts, pagination, search/sort UI
 - **Timezone**: Use valid IANA names (e.g., `Asia/Kolkata`)
 
 ---
+
+## Security & Secrets
+- Do not commit `.env`, `.env.testing`, or frontend `.env.local` (already ignored)
+- Use placeholders in docs; rotate any sample credentials you may have used
+- Prefer using distinct databases: `events_db` for the app, `events_test` for tests
 
 ## Project Stack
 

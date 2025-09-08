@@ -10,9 +10,8 @@ use App\Http\Resources\EventResource;
 use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Symfony\Component\HttpFoundation\Response;
-use OpenApi\Annotations as OA;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * @OA\Info(title="Mini Event Management API", version="1.0.0")
@@ -53,7 +52,10 @@ class EventController extends Controller
             $query->where('end_time', '>=', now('UTC'));
         }
 
-        $paginator = $query->orderBy('start_time')->paginate($perPage);
+        // Make ordering deterministic when start_time ties
+        $paginator = $query->orderBy('start_time', 'asc')
+                           ->orderBy('id', 'asc')
+                           ->paginate($perPage);
 
         return response()->json([
             'data' => EventResource::collection(collect($paginator->items()))->additional([])->resolve($request),
@@ -207,16 +209,20 @@ class EventController extends Controller
 
         switch ($sort) {
             case 'created_at_asc':
-                $query->orderBy('created_at', 'asc');
+                $query->orderBy('created_at', 'asc')
+                      ->orderBy('id', 'asc'); // tie-breaker for deterministic order
                 break;
             case 'name_asc':
-                $query->orderBy('name', 'asc');
+                $query->orderBy('name', 'asc')
+                      ->orderBy('id', 'asc'); // stable sort
                 break;
             case 'name_desc':
-                $query->orderBy('name', 'desc');
+                $query->orderBy('name', 'desc')
+                      ->orderBy('id', 'desc'); // stable sort
                 break;
             default:
-                $query->orderBy('created_at', 'desc');
+                $query->orderBy('created_at', 'desc')
+                      ->orderBy('id', 'desc'); // tie-breaker for deterministic order
         }
 
         $attendees = $query->paginate($perPage);

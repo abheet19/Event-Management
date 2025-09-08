@@ -1,9 +1,0 @@
-Event Api (Tests\Feature\EventApi)
- [x] Create and list event with timezone
-
-Example (Tests\Feature\Example)
- [x] The application returns a successful response
-
-Registration Api (Tests\Feature\RegistrationApi)
- [ ] Register and duplicate
-
