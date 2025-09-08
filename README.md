@@ -145,13 +145,11 @@ docker run --name pg-event `
 2) **Configure and run**
 ```powershell
 copy .env.example .env
-# Fill in DB_* for Postgres
 composer install
 php artisan key:generate
 php artisan migrate --seed
 php artisan serve  # http://127.0.0.1:8000
 ```
-
 ### API Features
 - **Timezone Support**: UTC storage, `?tz=Asia/Kolkata` or `X-Timezone` header for conversion
 - **Search & Sort**: `/events/{id}/attendees?q=search&sort=name_asc`
@@ -179,25 +177,3 @@ Features: Auto timezone detection, error toasts, pagination, search/sort UI
 - Backend seeded: `GET http://127.0.0.1:8000/api/v1/events` returns a non-empty `data` array
 - Frontend page `/events` loads without 500, shows seeded events
 - Attendees list search/sort works for a seeded event
-
-### Loom Walkthrough
-- **Video**: <ADD_LINK_HERE>
-- **Coverage**: Complete requirements validation - CRUD, registration conflicts, timezone management (IST), pagination, testing, Swagger docs
-
-### Troubleshooting
-- **500 Error**: PostgreSQL not running - start Docker container first
-- **CORS Issues**: Update `config/cors.php` and run `php artisan config:clear`
-- **Timezone**: Use valid IANA names (e.g., `Asia/Kolkata`)
-
----
-
-## Security & Secrets
-- Do not commit `.env`, `.env.testing`, or frontend `.env.local` (already ignored)
-- Use placeholders in docs; rotate any sample credentials you may have used
-- Prefer using distinct databases: `events_db` for the app, `events_test` for tests
-
-## Project Stack
-
-**Backend**: Laravel 11 + PostgreSQL + L5-Swagger  
-**Frontend**: Next.js 14 App Router + TypeScript + Tailwind CSS  
-**Features**: Timezone-aware API, pagination, search/sort, conflict handling, comprehensive testing
