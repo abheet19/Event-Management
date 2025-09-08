@@ -8,12 +8,12 @@ use App\Models\Event;
 
 class AttendeesSearchSortTest extends TestCase
 {
-    use RefreshDatabase;
-
-    private function seedAttendees(Event $event): void
+    use RefreshDatabase;    private function seedAttendees(Event $event): void
     {
         $this->postJson("/api/v1/events/{$event->id}/register", [ 'name' => 'Charlie', 'email' => 'charlie@sample.org' ])->assertCreated();
+        sleep(1); // Ensure different timestamps
         $this->postJson("/api/v1/events/{$event->id}/register", [ 'name' => 'Alice Smith', 'email' => 'alice@example.com' ])->assertCreated();
+        sleep(1); // Ensure different timestamps
         $this->postJson("/api/v1/events/{$event->id}/register", [ 'name' => 'Bob Jones', 'email' => 'bob@example.com' ])->assertCreated();
     }
 
